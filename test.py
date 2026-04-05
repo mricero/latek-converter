@@ -139,7 +139,7 @@ def test():
     exp_rate = (perfect_matches / len(test_set)) * 100
 
     print("\n" + "="*30)
-    print("📊 FINAL TEST RESULTS")
+    print("FINAL TEST RESULTS")
     print("="*30)
     print(f"Character Error Rate (CER): {avg_cer:.2f}%")
     print(f"Expression Rate (ExpRate):  {exp_rate:.2f}%")
