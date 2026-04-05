@@ -56,22 +56,24 @@ class HybridMathOCR(nn.Module):
     def forward(self, images, targets, tgt_mask=None):
         if images.shape[1] == 1:
             images = images.repeat(1, 3, 1, 1)
-            
+        
         features = self.backbone(images) 
         features = self.bottleneck(features) 
         features = self.pos_encoder_2d(features)
         
+        # Flatten: (B, C, H, W) -> (Seq_Vision, B, C)
         B, C, H, W = features.shape
         memory = features.view(B, C, -1).permute(2, 0, 1)
         
+        # Decoder: (B, Seq_Text) -> (Seq_Text, B, C)
         tgt_emb = self.text_embedding(targets).permute(1, 0, 2)
         tgt_emb = tgt_emb + self.pos_encoder_1d[:tgt_emb.size(0), :, :]
         
-        # FIX: Explicitly set is_causal=True to avoid the graph break check
+        # Pass tgt_is_causal=True to keep torch.compile happy
         output = self.transformer_decoder(
             tgt=tgt_emb, 
             memory=memory, 
             tgt_mask=tgt_mask,
             tgt_is_causal=True if tgt_mask is not None else False
         )
-        return self.fc_out(output)
+        return self.fc_out(output) # Returns (Seq, Batch, Vocab)
